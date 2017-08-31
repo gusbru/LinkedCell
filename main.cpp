@@ -1,122 +1,37 @@
 #include <iostream>
+#include <vector>
 #include "main.h"
+#include "atom.h"
+#include "linkedcell.h"
 
 using namespace std;
 
-typedef struct atom {
-    int id;
-    double x;
-    double y;
-    double z;
-    struct atom *neighbor;
-    struct atom *next;
-};
 
-
-
-typedef struct lcHead {
-    int cellId;
-    struct atom *neighbor;
-    struct lcHead *next;
-};
-
-void addAtom(double x, double y, double z, atom **head){
-
-    // first atom added
-    if ((*head) == nullptr) {
-        (*head) = new(atom);
-        (*head)->id = 0;
-        (*head)->x = x;
-        (*head)->y = y;
-        (*head)->z = z;
-        (*head)->next = nullptr;
-        return;
-    }
-
-    atom *current = (*head);
-
-    // go to the last atom
-    while (current->next != nullptr){
-        current = current->next;
-    }
-
-    //include the new atom in the end
-    current->next = new(atom);
-    int id = current->id + 1;
-    current = current->next;
-    current->id = id;
-    current->x = x;
-    current->y = y;
-    current->z = z;
-    current->next = nullptr;
-
-}
-
-int numberOfAtoms(atom *head){
-    int count = 0;
-    atom *current = head;
-
-    while(current != nullptr) {
-        count++;
-        current = current->next;
-    }
-    return count;
-}
-
-void printAtoms(atom *head) {
-    atom *current = head;
-
-    while(current != nullptr) {
-        cout << "AtomNumber(" << current->id << ")\t|x=" << current->x << "\t|y=" << current->y << "\t|z=" << current->z << endl;
-        current = current->next;
+void print(vector<atom> &vector) {
+    for (int i = 0; i < vector.size(); ++i) {
+        cout << "AtomNumber(" << i << ")\t|x=" << vector[i].getX() << "\t|y=" << vector[i].getY() << "\t|z="
+             << vector[i].getZ() << endl;
     }
 }
 
-void addLinkedCell(int cellIndex, atom *atomIndex, lcHead **head) {
-
-    // first cell
-    if ((*head) == nullptr) {
-        (*head) = new(lcHead);
-        (*head)->cellId = cellIndex;
-        (*head)->neighbor = atomIndex;
-        (*head)->next = nullptr;
-        return;
-    }
-
-    lcHead *current = (*head);
-
-    while(current->next != nullptr){
-        current = current->next;
-    }
-
-    current->next = new(lcHead);
-    current = current->next;
-    current->cellId = cellIndex;
-    current->neighbor = atomIndex;
-    current->next = nullptr;
-}
-
-void printLinkedCell(lcHead *head) {
-    lcHead *current = head;
+void printLinkedCell(vector<linkedcell> &head) {
     string atomIndex;
-    while (current != nullptr) {
-        if(current->neighbor != nullptr) {
-            atom *atom = current->neighbor;
-            string list = "";
-            while(atom != nullptr) {
+    for (int k = 0; k < head.size(); ++k) { // for each cell
+        if (head[k].getNeighbor() != nullptr) {
+            atom *atom = head[k].getNeighbor();
+            string list;
+            while (atom != nullptr) {
                 list.append("-->");
-                list.append(to_string(atom->id));
-                atom = atom->neighbor;
+                list.append(to_string(atom->getId()));
+                atom = atom->getNeighbor();
             }
             atomIndex = list;
         } else {
             atomIndex = "EMPTY";
         }
-        cout << "Cell  = " << current->cellId << " with first atom id = " << atomIndex << endl;
-        current = current->next;
+        cout << "Cell  = " << k << " with atoms = " << atomIndex << endl;
     }
 }
-
 
 int main() {
 
@@ -132,26 +47,24 @@ int main() {
     boxLength[1] = 12.0;
     boxLength[2] = RCUT;
 
-    //
-    atom *myAtoms = nullptr;
-
-    // include 10 atoms
-    addAtom(1.0, 1.0, 0.0, &myAtoms);
-    addAtom(6.0, 0.5, 0.0, &myAtoms);
-    addAtom(5.5, 1.5, 0.0, &myAtoms);
-    addAtom(6.5, 2.5, 0.0, &myAtoms);
-    addAtom(3.0, 5.5, 0.0, &myAtoms);
-    addAtom(4.0, 3.5, 0.0, &myAtoms);
-    addAtom(6.0, 5.0, 0.0, &myAtoms);
-    addAtom(8.5, 5.5, 0.0, &myAtoms);
-    addAtom(6.5, 7.0, 0.0, &myAtoms);
-    addAtom(1.5, 10.0, 0.0, &myAtoms);
+    vector<atom> myAtoms;
+    myAtoms.emplace_back(atom(0, 1.0, 1.0, 0.0));
+    myAtoms.emplace_back(atom(1, 6.0, 0.5, 0.0));
+    myAtoms.emplace_back(atom(2, 5.5, 1.5, 0.0));
+    myAtoms.emplace_back(atom(3, 6.5, 2.5, 0.0));
+    myAtoms.emplace_back(atom(4, 3.0, 5.5, 0.0));
+    myAtoms.emplace_back(atom(5, 4.0, 3.5, 0.0));
+    myAtoms.emplace_back(atom(6, 6.0, 5.0, 0.0));
+    myAtoms.emplace_back(atom(7, 8.5, 5.5, 0.0));
+    myAtoms.emplace_back(atom(8, 6.5, 7.0, 0.0));
+    myAtoms.emplace_back(atom(9, 1.5, 10.0, 0.0));
 
     // Count the number of atoms
-    nAtoms = numberOfAtoms(myAtoms);
+    nAtoms = myAtoms.size();
 
     cout << "Box with " << nAtoms << " atoms" << endl;
-    printAtoms(myAtoms);
+    print(myAtoms);
+
 
 
     // Divide the simulation box into small cells
@@ -164,7 +77,7 @@ int main() {
 
     }
 
-    // making the linked-cell list (lscl)
+    // making the linked-cell list
     int lcyz;
     int lcxyz;
 
@@ -175,47 +88,63 @@ int main() {
     cout << "lcxyz (number of cells) = " << lcxyz << endl; // number of cells
 
     /* Reset the headers (loop over the cells) */
-    lcHead *head = nullptr;
-    for (int i = 0; i < lcxyz; i++){
-        addLinkedCell(i, nullptr, &head);
+    vector<linkedcell> head;
+    for (int i = 0; i < lcxyz; i++) {
+        head.emplace_back(i, nullptr);
     }
 
 
     /* Scan atoms to construct headers, head and linked lists, lscl */
-    atom *currentAtom = myAtoms;
+    for (int j = 0; j < nAtoms; ++j) {
 
-    while(currentAtom != nullptr){
-        double r[3] = {currentAtom->x, currentAtom->y, currentAtom->z};
-
+        double r[3] = {myAtoms[j].getX(), myAtoms[j].getY(), myAtoms[j].getZ()};
         for (int a = 0; a < 3; a++) {
             mc[a] = (int) (r[a] / rc[a]);
         }
 
         /* Translate the vector cell index (mc) to a scalar index */
-        c = mc[0]*lcyz + mc[1]*Lc[2] + mc[2];
-
-        // find the head[c] (address) first
-        lcHead *currentCell = head;
-        while (currentCell->cellId != c){
-            currentCell = currentCell->next;
-        }
+        c = mc[0] * lcyz + mc[1] * Lc[2] + mc[2];
 
         /* Link the previous occupant (EMPTY if 1st on the list) */
-        currentAtom->neighbor = currentCell->neighbor;
+        myAtoms[j].setNeighbor(head[c].getNeighbor());
+        //cout << "atom " << myAtoms[j].getId() << " is at cell " << head[c].getCellId() << " with neighbor " << endl;
 
         /* The last one goes to the header */
-        currentCell->neighbor = currentAtom;
+        head[c].setNeighbor(&myAtoms[j]);
 
-
-        // update the atom
-        currentAtom = currentAtom->next;
     }
 
     printLinkedCell(head);
 
-    // end of calculation
-    free(head);
-    free(myAtoms);
+
+    /* calculate the pair interaction */
+
+    // probe atom
+    atom probeAtom = atom(99, 9, 2.5, 2.5);
+
+    for (mc[0] = 0; mc[0] < Lc[0]; (mc[0])++)
+        for (mc[1] = 0; mc[1] < Lc[1]; (mc[1])++)
+            for (mc[2] = 0; mc[2] < Lc[2]; (mc[2])++) {
+
+                // calculate the scalar cell index
+                c = mc[0] * lcyz + mc[1] * Lc[2] + mc[2];
+
+                if (head[c].getNeighbor() != nullptr) { // if the cell is not empty
+                    for (mc1[0]=mc[0]-1; mc1[0]<=mc[0]+1; (mc1[0])++)
+                        for (mc1[1]=mc[1]-1; mc1[1]<=mc[1]+1; (mc1[1])++)
+                            for (mc1[2]=mc[2]-1; mc1[2]<=mc[2]+1; (mc1[2])++) {
+
+                                c1 =  ((mc1[0]+Lc[0])%Lc[0])*lcyz
+                                     +((mc1[1]+Lc[1])%Lc[1])*Lc[2]
+                                     +((mc1[2]+Lc[2])%Lc[2]);
+
+                                cout << "cell (x,y,z,index)" << mc[0] << " " << mc[1] << " " << mc[2] << " " << c << " has neighbor " << mc1[0] << " " << mc1[1] << " " << mc1[2] << " " << c1 << endl;
+                            }
+                }
+
+
+
+            }
 
     return 0;
 }
