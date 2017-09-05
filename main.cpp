@@ -3,6 +3,8 @@
 #include "main.h"
 #include "atom.h"
 #include "linkedcell.h"
+#include "cell.h"
+#include <cmath>
 
 using namespace std;
 
@@ -31,6 +33,28 @@ void printLinkedCell(vector<linkedcell> &head) {
         }
         cout << "Cell  = " << k << " with atoms = " << atomIndex << endl;
     }
+}
+
+/**************************************************************
+ *
+ * Calculate the vector cell index from the
+ *
+ * @param x position x
+ * @param y position y
+ * @param z position z
+ * @return the vector cell index
+ **************************************************************/
+int calcCellIndex(double x, double y, double z) {
+    double r[3] = {x, y, z};
+
+    for (int a = 0; a < 3; a++) {
+        mc[a] = (int) (r[a] / rc[a]);
+    }
+
+    /* Translate the vector cell index (mc) to a scalar index */
+    c = mc[0] * Lc[1]*Lc[2] + mc[1] * Lc[2] + mc[2];
+
+    return c;
 }
 
 int main() {
@@ -120,7 +144,10 @@ int main() {
     /* calculate the pair interaction */
 
     // probe atom
-    atom probeAtom = atom(99, 9, 2.5, 2.5);
+    atom probeAtom = atom(99, 3.0, 7.0, 2.4);
+
+    vector<cell> neighbors;
+    //neighbors = new cell **[lcxyz];
 
     for (mc[0] = 0; mc[0] < Lc[0]; (mc[0])++) {
         for (mc[1] = 0; mc[1] < Lc[1]; (mc[1])++) {
@@ -129,11 +156,17 @@ int main() {
                 // calculate the scalar cell index
                 c = mc[0] * lcyz + mc[1] * Lc[2] + mc[2];
 
-                cout << "cell (x,y,z,index)" << mc[0] << " " << mc[1] << " " << mc[2] << " " << c << endl;
 
-                int neighborNumber = 0;
 
-                if (head[c].getNeighbor() != nullptr) { // if the cell is not empty
+                //cout << "cell (x,y,z,index)" << mc[0] << " " << mc[1] << " " << mc[2] << " " << c << endl;
+
+
+                neighbors.emplace_back(cell(mc[0], mc[1], mc[2], c));
+
+
+                /************************************************************************************/
+                //int neighborNumber = 0;
+                //if (head[c].getNeighbor() != nullptr) { // if the cell is not empty
                     for (mc1[0] = mc[0] - 1; mc1[0] <= mc[0] + 1; (mc1[0])++) {
                         for (mc1[1] = mc[1] - 1; mc1[1] <= mc[1] + 1; (mc1[1])++) {
                             for (mc1[2] = mc[2] - 1; mc1[2] <= mc[2] + 1; (mc1[2])++) {
@@ -147,20 +180,88 @@ int main() {
                                          + ((mc1[2] + Lc[2]) % Lc[2]);
 
 
-                                    neighborNumber += 1;
-                                    cout << "\t\t\t(" << neighborNumber << ") has neighbor (x,y,z,index) " << mc1[0]
-                                         << " " << mc1[1] << " " << mc1[2] << " " << c1 << endl;
-                                }
+                                    neighbors[c].addNeighbor(&head[c1]);
+                                    //[neighborNumber] = new cell(mc[0], mc[1], mc[2], c1);
 
+                                    cout << "c = " << c << " " << neighbors[c].getNumNeighbor() << endl;
+
+                                    //cout << "\t\t\t(" << neighborNumber << ") has neighbor (x,y,z,index) " << mc1[0]
+                                    //     << " " << mc1[1] << " " << mc1[2] << " " << c1 << endl;
+                                }
                             }
                         }
                     }
-                }
+                //}
+                /************************************************************************************/
+
+
 
 
             }
         }
     }
 
-    return 0;
+
+    cout << "************************************************************************************" << endl;
+    cout << "*       From the coordinates of the probe atom (x,y,z) and calculate cProbe        *" << endl;
+    cout << "************************************************************************************" << endl;
+    int cProbe = calcCellIndex(probeAtom.getX(), probeAtom.getY(), probeAtom.getZ());
+
+    cout << "cProbe = " << cProbe << endl;
+
+    cout << endl;
+    cout << "************************************************************************************" << endl;
+    cout << "*                            Getting the neighbor cells                            *" << endl;
+    cout << "************************************************************************************" << endl;
+    vector<linkedcell*> listCellNeighbors = neighbors[cProbe].getListNeighbor();
+    string list;
+    for (int i = 0; i < listCellNeighbors.size(); i++){
+        list += to_string(listCellNeighbors[i]->getCellId());
+        list += "->";
+    }
+    cout << list << endl;
+
+
+    cout << endl;
+    cout << "************************************************************************************" << endl;
+    cout << "*                            Getting the neighbor atoms                            *" << endl;
+    cout << "************************************************************************************" << endl;
+    vector<int> atomList;
+    for (int i = 0; i < listCellNeighbors.size(); i++){
+        int cellId = listCellNeighbors[i]->getCellId();
+        atom* atom = head[cellId].getNeighbor();
+        while (atom != nullptr) {
+            atomList.emplace_back(atom->getId());
+            atom = atom->getNeighbor();
+        }
+    }
+    cout << "The atoms are: ";
+    for (int k = 0; k < atomList.size(); ++k) {
+        cout << atomList[k] << " ";
+    }
+    cout << endl;
+
+    cout << endl;
+    cout << "************************************************************************************" << endl;
+    cout << "*                            Calculate the Potential                               *" << endl;
+    cout << "************************************************************************************" << endl;
+    double Upot = 0.0;
+    double epsilon = 1.0;
+    double sigma = 1.0;
+    for (int l = 0; l < atomList.size(); ++l) {
+        double r = sqrt(
+                pow(probeAtom.getX()-myAtoms[atomList[l]].getX(), 2.0) +
+                pow(probeAtom.getY()-myAtoms[atomList[l]].getY(), 2.0) +
+                pow(probeAtom.getY()-myAtoms[atomList[l]].getY(), 2.0)
+        );
+        if (r <= RCUT) {
+            Upot += 4.0 * ( pow((sigma/r),12.0) - pow((sigma/r),6.0) );
+        }
+
+    }
+
+    cout << "Upot = " << Upot << endl;
+    
+
+return 0;
 }
