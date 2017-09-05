@@ -122,29 +122,45 @@ int main() {
     // probe atom
     atom probeAtom = atom(99, 9, 2.5, 2.5);
 
-    for (mc[0] = 0; mc[0] < Lc[0]; (mc[0])++)
-        for (mc[1] = 0; mc[1] < Lc[1]; (mc[1])++)
+    for (mc[0] = 0; mc[0] < Lc[0]; (mc[0])++) {
+        for (mc[1] = 0; mc[1] < Lc[1]; (mc[1])++) {
             for (mc[2] = 0; mc[2] < Lc[2]; (mc[2])++) {
 
                 // calculate the scalar cell index
                 c = mc[0] * lcyz + mc[1] * Lc[2] + mc[2];
 
+                cout << "cell (x,y,z,index)" << mc[0] << " " << mc[1] << " " << mc[2] << " " << c << endl;
+
+                int neighborNumber = 0;
+
                 if (head[c].getNeighbor() != nullptr) { // if the cell is not empty
-                    for (mc1[0]=mc[0]-1; mc1[0]<=mc[0]+1; (mc1[0])++)
-                        for (mc1[1]=mc[1]-1; mc1[1]<=mc[1]+1; (mc1[1])++)
-                            for (mc1[2]=mc[2]-1; mc1[2]<=mc[2]+1; (mc1[2])++) {
+                    for (mc1[0] = mc[0] - 1; mc1[0] <= mc[0] + 1; (mc1[0])++) {
+                        for (mc1[1] = mc[1] - 1; mc1[1] <= mc[1] + 1; (mc1[1])++) {
+                            for (mc1[2] = mc[2] - 1; mc1[2] <= mc[2] + 1; (mc1[2])++) {
 
-                                c1 =  ((mc1[0]+Lc[0])%Lc[0])*lcyz
-                                     +((mc1[1]+Lc[1])%Lc[1])*Lc[2]
-                                     +((mc1[2]+Lc[2])%Lc[2]);
+                                if (mc1[0] >= 0 && mc1[1] >= 0 && mc1[2] >= 0 &&
+                                    mc1[0] < Lc[0] && mc1[1] < Lc[1] && mc1[2] < Lc[2]) { // non-periodic box
 
-                                cout << "cell (x,y,z,index)" << mc[0] << " " << mc[1] << " " << mc[2] << " " << c << " has neighbor " << mc1[0] << " " << mc1[1] << " " << mc1[2] << " " << c1 << endl;
+
+                                    c1 = ((mc1[0] + Lc[0]) % Lc[0]) * lcyz
+                                         + ((mc1[1] + Lc[1]) % Lc[1]) * Lc[2]
+                                         + ((mc1[2] + Lc[2]) % Lc[2]);
+
+
+                                    neighborNumber += 1;
+                                    cout << "\t\t\t(" << neighborNumber << ") has neighbor (x,y,z,index) " << mc1[0]
+                                         << " " << mc1[1] << " " << mc1[2] << " " << c1 << endl;
+                                }
+
                             }
+                        }
+                    }
                 }
 
 
-
             }
+        }
+    }
 
     return 0;
 }
