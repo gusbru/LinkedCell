@@ -5,6 +5,7 @@
 #include "linkedcell.h"
 #include "cell.h"
 #include <cmath>
+#include <fstream>
 
 using namespace std;
 
@@ -72,6 +73,42 @@ int main() {
     boxLength[0] = 10.0;
     boxLength[1] = 12.0;
     boxLength[2] = RCUT;
+
+    nAtoms = 10;
+    atom** myAtoms2;
+    myAtoms2 = new atom*[10];
+
+    ifstream inpFileAtoms("../coordinates.xyz");
+    string line;
+    double x, y, z;
+    if (inpFileAtoms.is_open()){
+        getline(inpFileAtoms, line);
+        long n = stol(line);
+        cout << n << endl;
+
+        getline(inpFileAtoms, line);
+
+        for (int i = 0; i < n; ++i) {
+            getline(inpFileAtoms, line);
+            cout << line << endl;
+        }
+
+    } else {
+        cout << "Unable to open file" << endl;
+        return 0;
+    }
+
+    myAtoms2[0] = new atom(0, 1.0, 1.0, 0.0);
+    myAtoms2[1] = new atom(1, 6.0, 0.5, 0.0);
+    myAtoms2[2] = new atom(2, 5.5, 1.5, 0.0);
+    myAtoms2[3] = new atom(3, 6.5, 2.5, 0.0);
+    myAtoms2[4] = new atom(4, 3.0, 5.5, 0.0);
+    myAtoms2[5] = new atom(5, 4.0, 3.5, 0.0);
+    myAtoms2[6] = new atom(6, 6.0, 5.0, 0.0);
+    myAtoms2[7] = new atom(7, 8.5, 5.5, 0.0);
+    myAtoms2[8] = new atom(8, 6.5, 7.0, 0.0);
+    myAtoms2[9] = new atom(9, 1.5, 10.0, 0.0);
+
 
     vector<atom> myAtoms;
     myAtoms.emplace_back(atom(0, 1.0, 1.0, 0.0));
