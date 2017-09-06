@@ -16,7 +16,7 @@ public:
 
 private:
     int cellId;
-    struct atom *neighbor;
+    atom *neighbor;
 };
 
 

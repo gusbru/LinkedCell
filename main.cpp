@@ -57,6 +57,8 @@ int calcCellIndex(double x, double y, double z) {
     return c;
 }
 
+
+
 int main() {
 
     /*******************************
@@ -214,6 +216,7 @@ int main() {
     cout << "*                            Getting the neighbor cells                            *" << endl;
     cout << "************************************************************************************" << endl;
     vector<linkedcell*> listCellNeighbors = neighbors[cProbe].getListNeighbor();
+
     string list;
     for (int i = 0; i < listCellNeighbors.size(); i++){
         list += to_string(listCellNeighbors[i]->getCellId());
@@ -235,6 +238,7 @@ int main() {
             atom = atom->getNeighbor();
         }
     }
+
     cout << "The atoms are: ";
     for (int k = 0; k < atomList.size(); ++k) {
         cout << atomList[k] << " ";

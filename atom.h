@@ -8,13 +8,17 @@
 
 class atom {
 public:
+    // constructor
     atom(int, double, double, double);
-    int getId();
+
+    // getters
+    int    getId();
     double getX();
     double getY();
     double getZ();
-    atom *getNeighbor();
+    atom*  getNeighbor();
 
+    // setters
     void setX(double);
     void setY(double);
     void setZ(double);
@@ -22,11 +26,11 @@ public:
 
 
 private:
-    int id;
+    int    id;
     double x;
     double y;
     double z;
-    atom *neighbor;
+    atom*  neighbor;
 
 };
 
