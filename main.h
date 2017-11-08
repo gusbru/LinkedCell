@@ -22,6 +22,9 @@ int mc1[3];                     /* vector neighbor cell index */
 int c;                          /* serial cell index */
 int c1;                         /* serial cell neighbor index */
 
+// number of times that the potential was computed
+int nCalcPot = 0;
+
 // constants
 #define EMPTY (-1)
 
